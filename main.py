@@ -80,13 +80,15 @@ def steal_from_dealer(inventory, dealers_inventory, success_chance=0.5):
     if not dealers_inventory:
         print("they got nothing u stole all of it")
         return False
-        
+
     if random.random() < success_chance:
         print("PICKPOCKET GOOD")
         item = dealers_inventory.pop(0)
         inventory.append(item)
+        return True
     else:
         print("PICKPOCKET BAD U DEAD")
+        return False
 
     dealers_name = get_random_dealer()
 
