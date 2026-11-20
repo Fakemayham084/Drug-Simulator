@@ -1,9 +1,28 @@
 import time
+import json
+import random
 
 withdraw = 0
 money = 2000
 age = 0
 name = None
+dealers_name = None
+inventory = []
+dealers_inventory = []
+
+with open("names.json", "r") as f:
+    people = json.load(f)
+
+first = random.choice(people)["first_name"]
+last = random.choice(people)["last_name"]
+
+def get_random_dealer():
+    dealer_first = random.choice(people)["first_name"]
+    dealers_last = random.choice(people)["last_name"]
+    return f"{dealer_first} {dealers_last}"
+
+name = f"{first} {last}"
+dealers_name = get_random_dealer()
 
 drugs = [
     {"name": "Unicorn Rainbow", "cost": 200},
@@ -55,11 +74,24 @@ def list_drugs(drug_list):
 
     dealer()
 
-def steal_from_dealer():
-    print("STEAL")
+def steal_from_dealer(inventory, dealers_inventory, success_chance=0.5):
+    global dealers_name
+
+    if not dealers_inventory:
+        print("they got nothing u stole all of it")
+        return False
+        
+    if random.random() < success_chance:
+        print("PICKPOCKET GOOD")
+        item = dealers_inventory.pop(0)
+        inventory.append(item)
+    else:
+        print("PICKPOCKET BAD U DEAD")
+
+    dealers_name = get_random_dealer()
 
 def main():
-    print("Welcome to drug simulator!\nYou start off with $2000\nand need to be on a drugs before the last one weres off and you go into withdraw.\nthe game starts in 3 seconds\n3")
+    print(f"Welcome to drug simulator!\nYou start off with $2000\nand need to be on a drugs before the last one weres off and you go into withdraw.\nyou are also {name}\nthe game starts in 3 seconds\n3")
     time.sleep(1)
     print("2")
     time.sleep(1)
