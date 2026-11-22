@@ -1,10 +1,13 @@
 import time
 import json
 import random
+import threading
 
+state_lock = threading.Lock()
 is_alive = True
 withdraw = 0
-money = 2000
+money_in_bank = 2000
+money = 0
 age = 0
 name = None
 dealers_name = None
@@ -67,7 +70,70 @@ def dealer():
         dealer()
 
 def bank():
-    print("BANK")
+    global money, money_in_bank
+
+    while True:
+        print(
+            f"\nYou currently have {format_money(money_in_bank)} in the bank "
+            f"and {format_money(money)} in your wallet."
+        )
+        option = input("Would you like to withdraw, deposit, or exit? (W/D/E): ").strip().lower()
+
+        if option in ("w", "withdraw"):
+            if money_in_bank <= 0:
+                print("You don't have any money in the bank.")
+                continue
+
+            raw = input("How much would you like to withdraw? ").strip()
+            try:
+                amount = int(raw)
+            except ValueError:
+                print("Please enter a valid whole number.")
+                continue
+
+            if amount <= 0:
+                print("Amount must be greater than 0.")
+            elif amount > money_in_bank:
+                print("You don't have that much in the bank.")
+            else:
+                money_in_bank -= amount
+                money += amount
+                print(
+                    f"Withdrew {format_money(amount)}. "
+                    f"Wallet: {format_money(money)} | Bank: {format_money(money_in_bank)}"
+                )
+
+        elif option in ("d", "deposit"):
+            if money <= 0:
+                print("You don't have any money in your wallet to deposit.")
+                continue
+
+            raw = input("How much would you like to deposit? ").strip()
+            try:
+                amount = int(raw)
+            except ValueError:
+                print("Please enter a valid whole number.")
+                continue
+
+            if amount <= 0:
+                print("Amount must be greater than 0.")
+            elif amount > money:
+                print("You don't have that much in your wallet.")
+            else:
+                money -= amount
+                money_in_bank += amount
+                print(
+                    f"Deposited {format_money(amount)}. "
+                    f"Wallet: {format_money(money)} | Bank: {format_money(money_in_bank)}"
+                )
+
+        elif option in ("e", "exit", "back", ""):
+            print("Leaving the bank.")
+            menu()
+            return
+
+        else:
+            print("Invalid option. Please enter W, D, or E.")
 
 def drug_menu():
     if not inventory:
