@@ -10,7 +10,7 @@ is_alive = True
 steal_chance = 0.5
 stop_program = False
 withdrawal_time = 20
-money_in_bank = 2000
+money_in_bank = 10000
 money = 0
 age = 0
 name = None
@@ -24,6 +24,8 @@ with open("names.json", "r") as f:
 first = random.choice(people)["first_name"]
 last = random.choice(people)["last_name"]
 
+age = random.randint(20, 100)
+
 def get_random_dealer():
     dealer_first = random.choice(people)["first_name"]
     dealers_last = random.choice(people)["last_name"]
@@ -35,10 +37,10 @@ dealers_name = get_random_dealer()
 drugs = [
     {"name": "Unicorn Rainbow", "cost": 200, "withdraw_time": 20},
     {"name": "Pixie Dust", "cost": 600, "withdraw_time": 60},
-    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999},
-    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999},
-    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999},
-    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999}
+    {"name": "Starlight Frost", "cost": 950, "withdraw_time": 80},
+    {"name": "Velvet Eclipse", "cost": 1300, "withdraw_time": 100},
+    {"name": "Solar Flare", "cost": 1650, "withdraw_time": 120},
+    {"name": "Void Essence", "cost": 2000, "withdraw_time": 150},
 ]
 
 def start_or_reset_withdrawal(seconds=20):
@@ -306,7 +308,7 @@ def main():
     timer_thread.start()
 
     random_dealer_inventory(dealers_inventory, drugs)
-    print(f"Welcome to drug simulator!\nYou start off with $2000 but its in your bank so you need to withdraw it\nand need to be on a drugs before the last one weres off and you go into withdraw.\nyou are also {name}\nthe game starts in 3 seconds\n3")
+    print(f"Welcome to drug simulator!\nYou start off with $10000 but its in your bank so you need to withdraw it\nand need to be on a drugs before the last one weres off and you go into withdraw.\nyou are also {name} and {age} years old\nthe game starts in 3 seconds\n3")
     time.sleep(1)
     print("2")
     time.sleep(1)
