@@ -57,25 +57,86 @@ def dealer():
 ===============================""")  
     option = input()
     if option == "1":
-        list_drugs(drugs)
+        list_drugs_dealer(drugs)
     elif option == "2":
         buy_drug()
     elif option == "3":
         steal_from_dealer(inventory, dealers_inventory)
     else:
         print("INVAILD OPTION")
+        dealer()
 
 def bank():
     print("BANK")
 
 def drug_menu():
-    print("DRUG MENU")
+    if not inventory:
+        print("Your inventory is empty.")
+        menu()
+        return
+
+    print("=== Your Drugs ===")
+    for idx, item in enumerate(inventory, start=1):
+        drug_name = item["name"] if isinstance(item, dict) else item
+        print(f"  {idx}) {drug_name}")
+
+    while True:
+        choice = input("Enter a drug name to use (or 'back' to return): ").strip()
+        if choice.lower() in ("back", "cancel", ""):
+            menu()
+            return
+
+        for idx, item in enumerate(inventory):
+            drug_name = item["name"] if isinstance(item, dict) else item
+            if choice.lower() == drug_name.lower():
+                used_item = inventory.pop(idx)
+                print(f"You used {drug_name}!")
+                # RESET WITHDRAW
+                menu()
+                return
+
+        print("You don't have that drug in your inventory. Try again.")
 
 def info():
     print("INFO")
 
 def buy_drug():
-    print("BUY")
+    global money
+
+    list_drugs(drugs)
+    while True:
+        option = input("Please enter Drug Name (or 'cancel' to go back): ").strip()
+        if option.lower() in ("cancel", "back"):
+            print("Cancelled.")
+            return
+
+        for drug in drugs:
+            if option.lower() == drug["name"].lower():
+                drug_name = drug["name"]
+                price = drug["cost"]
+
+                while True:
+                    confirm = input(
+                        f"Are you sure you want to buy {drug_name} for {format_money(price)}? (Y/N) "
+                    ).strip().lower()
+
+                    if confirm in ("yes", "y", ""):
+                        if money >= price:
+                            money -= price
+                            inventory.append(drug_name)
+                            print(f"Bought {drug_name}! You now have {format_money(money)} remaining.")
+                            menu()
+                        else:
+                            print("YOU DO NOT HAVE THE FUNDS U BROKE PERSON")
+                        return
+                    elif confirm in ("no", "n"):
+                        print("OK")
+                        menu()
+                        return
+                    else:
+                        print("Invalid Option. Please enter Y or N.")
+
+        print("Drug not found. Try again.")
 
 def format_money(money):
     return f"${money}"
@@ -86,9 +147,15 @@ def list_drugs(drug_list):
         name = f"=== {drug["name"]}, Price: {drug["cost"]} ==="
         print(name)
 
+def list_drugs_dealer(drug_list):
+    print("=== For Sale ===")
+    for drug in drug_list:
+        name = f"=== {drug["name"]}, Price: {drug["cost"]} ==="
+        print(name)
+
     dealer()
 
-def steal_from_dealer(inventory, dealers_inventory, success_chance=0.5):
+def steal_from_dealer(inventory, dealers_inventory, success_chance=1):
     global dealers_name
     global is_alive
 
@@ -98,14 +165,14 @@ def steal_from_dealer(inventory, dealers_inventory, success_chance=0.5):
         return False
 
     if random.random() < success_chance:
-        print("PICKPOCKET GOOD")
+        
         item = dealers_inventory.pop(0)
         inventory.append(item)
-        print(inventory)
+        print(f"You got {inventory[-1]}")
         menu()
         return True
     else:
-        print("PICKPOCKET BAD U DEAD")
+        print("The Dealer caught you pickpocketing and killed you.")
         is_alive = False
         return False
 
