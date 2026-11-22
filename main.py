@@ -2,10 +2,14 @@ import time
 import json
 import random
 import threading
+import os
 
 state_lock = threading.Lock()
+timer_active = threading.Event()
 is_alive = True
-withdraw = 0
+steal_chance = 0.5
+stop_program = False
+withdrawal_time = 20
 money_in_bank = 2000
 money = 0
 age = 0
@@ -29,13 +33,55 @@ name = f"{first} {last}"
 dealers_name = get_random_dealer()
 
 drugs = [
-    {"name": "Unicorn Rainbow", "cost": 200},
-    {"name": "Pixie Dust", "cost": 600},
-    {"name": "PLACEHOLDER", "cost": 999999},
-    {"name": "PLACEHOLDER", "cost": 999999},
-    {"name": "PLACEHOLDER", "cost": 999999},
-    {"name": "PLACEHOLDER", "cost": 999999}
+    {"name": "Unicorn Rainbow", "cost": 200, "withdraw_time": 20},
+    {"name": "Pixie Dust", "cost": 600, "withdraw_time": 60},
+    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999},
+    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999},
+    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999},
+    {"name": "PLACEHOLDER", "cost": 999999, "withdraw_time": 999}
 ]
+
+def start_or_reset_withdrawal(seconds=20):
+    global withdrawal_time
+    with state_lock:
+        withdrawal_time = seconds
+    timer_active.set()
+
+
+def stop_withdrawal():
+    timer_active.clear()
+
+
+def withdrawal_loop():
+    global withdrawal_time, is_alive, steal_chance
+    while not stop_program:
+        timer_active.wait()
+        if stop_program:
+            break
+
+        time.sleep(1)
+
+        if not timer_active.is_set():
+            continue
+
+        with state_lock:
+            if not is_alive:
+                timer_active.clear()
+                break
+
+            withdrawal_time -= 1
+
+            if withdrawal_time <= 0:
+                print("\nYou went into withdrawal and died!\nRIP")
+                is_alive = False
+                timer_active.clear()
+                os._exit(0)
+
+            if withdrawal_time == 5:
+                print("\nWarning: Withdrawal in 5 seconds! Use a drug or u die")
+                steal_chance = 0.8
+            elif withdrawal_time < 5:
+                steal_chance = 0.5
 
 def random_dealer_inventory(dealers_inventory, drugs):
     if len(drugs) == 0:
@@ -64,7 +110,7 @@ def dealer():
     elif option == "2":
         buy_drug()
     elif option == "3":
-        steal_from_dealer(inventory, dealers_inventory)
+        steal_from_dealer(inventory, dealers_inventory, steal_chance)
     else:
         print("INVAILD OPTION")
         dealer()
@@ -157,14 +203,22 @@ def drug_menu():
             if choice.lower() == drug_name.lower():
                 used_item = inventory.pop(idx)
                 print(f"You used {drug_name}!")
-                # RESET WITHDRAW
+                for drug in drugs:
+                    if drug["name"] == drug_name:
+                        start_or_reset_withdrawal(drug["withdraw_time"])
                 menu()
                 return
 
         print("You don't have that drug in your inventory. Try again.")
 
 def info():
-    print("INFO")
+    global withdrawal_time
+    global money
+    global money_in_bank
+
+    print(f"You currently have {withdrawal_time}s left before you die (unless you didn't use a drug yet then you got forever)\n{format_money(money_in_bank)} in the bank\n{format_money(money)} in your wallet\nIf you don't know how to play all you gotta do is take money from your bank into your wallet\nEither Buy Drugs or Steal them from your dealer(if you fail the dealer kills you)\nafter you use your first drug the withdraw timer starts and you need to keep using drugs before it end and if it ends you die.\nthats all you need to know and you can look around the menu\ngame does not start until first drug is used.")
+    time.sleep(10)
+    menu()
 
 def buy_drug():
     global money
@@ -174,6 +228,7 @@ def buy_drug():
         option = input("Please enter Drug Name (or 'cancel' to go back): ").strip()
         if option.lower() in ("cancel", "back"):
             print("Cancelled.")
+            menu()
             return
 
         for drug in drugs:
@@ -194,6 +249,7 @@ def buy_drug():
                             menu()
                         else:
                             print("YOU DO NOT HAVE THE FUNDS U BROKE PERSON")
+                            menu()
                         return
                     elif confirm in ("no", "n"):
                         print("OK")
@@ -245,8 +301,12 @@ def steal_from_dealer(inventory, dealers_inventory, success_chance=1):
     dealers_name = get_random_dealer()
 
 def main():
+
+    timer_thread = threading.Thread(target=withdrawal_loop, daemon=True)
+    timer_thread.start()
+
     random_dealer_inventory(dealers_inventory, drugs)
-    print(f"Welcome to drug simulator!\nYou start off with $2000\nand need to be on a drugs before the last one weres off and you go into withdraw.\nyou are also {name}\nthe game starts in 3 seconds\n3")
+    print(f"Welcome to drug simulator!\nYou start off with $2000 but its in your bank so you need to withdraw it\nand need to be on a drugs before the last one weres off and you go into withdraw.\nyou are also {name}\nthe game starts in 3 seconds\n3")
     time.sleep(1)
     print("2")
     time.sleep(1)
@@ -277,3 +337,5 @@ def menu():
         menu()
 
 main()
+stop_program = True
+timer_active.set()
